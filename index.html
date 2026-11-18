@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1437">
+  <title>Salidas con Amigos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎉%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+  <!-- ============ Aviso: falta pegar la configuración de Firebase ============ -->
+  <section id="pantalla-config" class="login" hidden>
+    <div class="login-card">
+      <div class="logo">🛠️</div>
+      <h1>Falta configurar Firebase</h1>
+      <p class="sub">Abre <code>js/firebase-config.js</code> y pega ahí los datos de tu proyecto de Firebase. Los pasos están en el <strong>README.md</strong> (sección 2).</p>
+    </div>
+  </section>
+
+  <!-- ============ Login / Registro (solo usuario y contraseña) ============ -->
+  <section id="pantalla-login" class="login" hidden>
+    <div class="login-card">
+      <div class="logo">🎉</div>
+      <h1>Salidas con Amigos</h1>
+      <p class="sub">Planeen, recuerden y no se pierdan ni un plan.</p>
+
+      <div class="tabs" role="tablist" aria-label="Acceso">
+        <button type="button" role="tab" class="activo" data-modo="ingresar" aria-selected="true">Ingresar</button>
+        <button type="button" role="tab" data-modo="registrar" aria-selected="false">Crear cuenta</button>
+      </div>
+
+      <form id="form-auth" novalidate>
+        <label>Nombre de usuario
+          <input id="auth-usuario" autocomplete="username" autocapitalize="none" spellcheck="false"
+                 maxlength="20" placeholder="ej. nati_22" required>
+        </label>
+        <label>Contraseña
+          <input id="auth-pass" type="password" autocomplete="current-password"
+                 minlength="6" placeholder="mínimo 6 caracteres" required>
+        </label>
+        <p id="auth-error" class="error" role="alert" hidden></p>
+        <button id="auth-submit" class="btn btn-rosa btn-block">Ingresar</button>
+      </form>
+      <p class="hint">Solo usuario y contraseña: sin correo ni códigos.</p>
+    </div>
+  </section>
+
+  <!-- ============ Aplicación (dashboard) ============ -->
+  <div id="app" hidden>
+    <header class="topbar">
+      <div class="topbar-in">
+        <div class="marca"><span class="marca-emoji">🎉</span><span class="marca-texto">Salidas con Amigos</span></div>
+        <div class="topbar-der">
+          <span class="usuario" title="Sesión iniciada">👤 <strong id="nombre-usuario"></strong></span>
+          <button id="btn-salir" class="btn btn-ghost btn-sm">Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="contenedor">
+      <section id="banner-alertas" class="banner" aria-live="polite" hidden></section>
+
+      <div class="toolbar">
+        <div id="filtro-estado" class="chips" role="group" aria-label="Filtrar por estado"></div>
+        <select id="filtro-tipo" aria-label="Filtrar por tipo">
+          <option value="todos">Todos los tipos</option>
+          <option value="comer">🍽️ Salir a comer</option>
+          <option value="casa">🏠 Hacer en casa</option>
+          <option value="jugar">🎮 Salida para jugar</option>
+        </select>
+      </div>
+
+      <div id="lista-salidas" class="grid"></div>
+      <div id="vacio" class="vacio" hidden>
+        <div class="vacio-emoji">🗓️</div>
+        <p>Todavía no hay salidas aquí.</p>
+        <p class="hint">Toca <strong>＋ Nueva salida</strong> y propón el primer plan.</p>
+      </div>
+    </main>
+
+    <button id="btn-nueva" class="fab"><span aria-hidden="true">＋</span> Nueva salida</button>
+  </div>
+
+  <!-- ============ Modal: crear / editar salida ============ -->
+  <dialog id="dlg-salida" class="modal" aria-labelledby="salida-titulo">
+    <form id="form-salida">
+      <div class="modal-head">
+        <h2 id="salida-titulo">Nueva salida</h2>
+        <button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="campos">
+        <label class="full">Nombre del lugar *
+          <input name="lugar" required maxlength="80" placeholder="Ej. Pizzería La Esquina">
+        </label>
+        <label class="full">Dirección *
+          <input name="direccion" required maxlength="160" placeholder="Ej. Av. 6 de Agosto #123, Oruro">
+        </label>
+        <label class="full">Enlace de Google Maps <small>(opcional: si lo dejas vacío lo generamos con la dirección)</small>
+          <input name="mapsLink" type="url" placeholder="https://maps.app.goo.gl/…">
+        </label>
+        <label>Fecha y hora *
+          <input name="fechaHora" type="datetime-local" required>
+        </label>
+        <label>Tipo de actividad *
+          <select name="tipo" required>
+            <option value="" disabled selected>Elige una…</option>
+            <option value="comer">🍽️ Salir a comer</option>
+            <option value="casa">🏠 Hacer en casa</option>
+            <option value="jugar">🎮 Salida para jugar</option>
+          </select>
+        </label>
+        <label>Teléfono <small>(opcional)</small>
+          <input name="telefono" type="tel" inputmode="tel" maxlength="20" placeholder="Ej. 71234567">
+        </label>
+        <label>Estado
+          <select name="estado">
+            <option value="pendiente">⏳ Pendiente</option>
+            <option value="cumplida">✅ Cumplida</option>
+            <option value="cancelada">🚫 Cancelada</option>
+          </select>
+        </label>
+        <label class="full">Descripción / notas / receta
+          <textarea name="descripcion" rows="4" maxlength="1500" placeholder="Qué vamos a pedir, ingredientes de la receta, qué llevar…"></textarea>
+        </label>
+        <label class="full">Link de referencia <small>(TikTok, YouTube, reseña…)</small>
+          <input name="enlace" type="url" placeholder="https://www.tiktok.com/…">
+        </label>
+      </div>
+
+      <p id="salida-error" class="error" role="alert" hidden></p>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-ghost" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn btn-rosa" id="salida-guardar">Guardar salida</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ============ Modal: álbum de recuerdos ============ -->
+  <dialog id="dlg-album" class="modal modal-grande" aria-labelledby="album-titulo">
+    <div class="modal-head">
+      <div>
+        <p class="eyebrow">📸 Álbum de recuerdos</p>
+        <h2 id="album-titulo"></h2>
+        <p id="album-sub" class="hint"></p>
+      </div>
+      <button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="album-barra">
+      <button type="button" id="album-subir" class="btn btn-rosa">📷 Subir fotos</button>
+      <input type="file" id="album-input" accept="image/*" multiple hidden>
+      <div class="toggle" role="group" aria-label="Vista del álbum">
+        <button type="button" class="on" data-vista="cards" aria-pressed="true">▦ Tarjetas</button>
+        <button type="button" data-vista="carrusel" aria-pressed="false">◉ Carrusel</button>
+      </div>
+    </div>
+
+    <div id="album-progreso" class="progreso" hidden>
+      <div class="barra"><span></span></div>
+      <small></small>
+    </div>
+
+    <div id="album-contenido"></div>
+  </dialog>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
